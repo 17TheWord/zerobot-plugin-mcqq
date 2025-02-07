@@ -1,4 +1,4 @@
-module zerobot-plugin-mcqq
+module github.com/17TheWord/zerobot-plugin-mcqq
 
 go 1.20
 
