@@ -31,7 +31,7 @@ func main() {
 						GroupId: 0,
 					},
 				},
-				RconCmd: true,
+				RconCmd: false,
 				RconMsg: false,
 			},
 		},
