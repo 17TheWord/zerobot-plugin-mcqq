@@ -1,13 +1,12 @@
 package main
 
 import (
+	"github.com/17TheWord/zerobot-plugin-mcqq/mcqq"
 	log "github.com/sirupsen/logrus"
 	easy "github.com/t-tomalak/logrus-easy-formatter"
 	"github.com/wdvxdr1123/ZeroBot/driver"
-	"zerobot-plugin-mcqq/mcqq"
 
 	zero "github.com/wdvxdr1123/ZeroBot"
-	_ "zerobot-plugin-mcqq/mcqq"
 )
 
 func init() {
