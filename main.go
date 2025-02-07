@@ -27,8 +27,8 @@ func main() {
 			"Server": {
 				GroupList: []mcqq.Group{
 					{
-						BotId:   226055775,
-						GroupId: 662616438,
+						BotId:   0,
+						GroupId: 0,
 					},
 				},
 				RconCmd: true,
@@ -39,10 +39,10 @@ func main() {
 	zero.RunAndBlock(&zero.Config{
 		NickName:      []string{"bot"},
 		CommandPrefix: "/",
-		SuperUsers:    []int64{1461909940},
+		SuperUsers:    []int64{0},
 		Driver: []zero.Driver{
 			// 正向 WS
-			//driver.NewWebSocketClient("ws://127.0.0.1:6700", ""),
+			driver.NewWebSocketClient("ws://127.0.0.1:6700", ""),
 			// 反向 WS
 			driver.NewWebSocketServer(16, "ws://127.0.0.1:8081", ""),
 		},
