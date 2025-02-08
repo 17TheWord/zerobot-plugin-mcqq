@@ -13,13 +13,13 @@
 
 # 支持的服务端列表
 
+> 配套 **插件/模组** 请前往 [`鹊桥`](https://github.com/17TheWord/QueQiao) 仓库查看详情
+
 - Spigot
 - Forge
 - Fabric
 - Velocity
 - 原版端
-
-配套 **插件/模组** 请前往 [`鹊桥`](https://github.com/17TheWord/QueQiao) 仓库查看详情
 
 # 功能
 
@@ -33,7 +33,7 @@
         - [x] 指令
         - [x] 群员聊天文本
         - [x] 图片、视频等内容转换为可点击在浏览器打开的 `[图片]`、`[视频]`
-        - [x] 可选配置，借助 [`@kitUIN/ChatImage`](https://github.com/kitUIN/ChatImage) 直接在游戏内显示图片
+        - [x] 借助 [`@kitUIN/ChatImage`](https://github.com/kitUIN/ChatImage) 直接在游戏内显示图片
 
 - 特殊消息支持
     - 群聊
