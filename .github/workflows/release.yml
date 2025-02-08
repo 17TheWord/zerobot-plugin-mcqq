@@ -29,6 +29,7 @@ jobs:
         id: get_version
         run: |
           VERSION=$(cat VERSION)
+          echo "当前版本号为 ${VERSION}"
           echo "VERSION=${VERSION}" >> $GITHUB_ENV
 
       - name: Check if Go code compiles
