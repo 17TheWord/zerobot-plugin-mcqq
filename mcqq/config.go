@@ -11,9 +11,15 @@ type Server struct {
 	RconCmd   bool
 }
 
+type ForwardServer struct {
+	ServerName string
+	Url        string
+}
+
 type Config struct {
 	Host            string
 	Port            int
+	ForwardUrlList  []ForwardServer
 	ServerMap       map[string]Server
 	CommandPriority int
 	AccessToken     string
