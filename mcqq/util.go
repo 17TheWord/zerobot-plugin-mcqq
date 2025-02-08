@@ -38,5 +38,5 @@ func cleanupWebSocketConnection(conn *websocket.Conn, serverName string) {
 		return
 	}
 	delete(McBots, serverName)
-	log.Infoln("Disconnected from websocket [%s]\n", serverName)
+	log.Infof("Disconnected from websocket [%s]", serverName)
 }
