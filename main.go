@@ -19,8 +19,14 @@ func init() {
 
 func main() {
 	mcqq.PluginConfig = mcqq.Config{
-		Host:            "127.0.0.1",
-		Port:            8085,
+		Host: "127.0.0.1",
+		Port: 8085,
+		ForwardUrlList: []mcqq.ForwardServer{
+			{
+				ServerName: "Server",
+				Url:        "ws://127.0.0.1:8080",
+			},
+		},
 		AccessToken:     "",
 		CommandPriority: 1,
 		ServerMap: map[string]mcqq.Server{

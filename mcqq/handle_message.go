@@ -10,7 +10,9 @@ import (
 func processQQMessage2MinecraftProtocol(ctx *zero.Ctx) WebsocketData {
 	messageTextComponentList := make([]MessageSegment, len(ctx.Event.Message)+3)
 	groupNameMap := map[int64]string{}
-	groupName := "未知群聊"
+
+	// 移除无效的初始赋值
+	var groupName string
 
 	if value, exist := groupNameMap[ctx.Event.GroupID]; exist {
 		groupName = value
@@ -19,6 +21,7 @@ func processQQMessage2MinecraftProtocol(ctx *zero.Ctx) WebsocketData {
 		groupNameMap[ctx.Event.GroupID] = groupInfo.Name
 		groupName = groupInfo.Name
 	}
+
 	messageTextComponentList[0] = MessageSegment{Type: "text", Data: TextComponent{Text: groupName}}
 
 	nickname := ctx.Event.Sender.NickName
@@ -111,7 +114,6 @@ func handleMinecraftMessage(messageBytes []byte) {
 		} else {
 			message += messageEvent.Message
 		}
-		break
 
 	case "join", "quit":
 		var noticeEvent BaseNoticeEvent
@@ -126,7 +128,6 @@ func handleMinecraftMessage(messageBytes []byte) {
 		} else {
 			message += noticeEvent.Player.Nickname + " 退出了服务器"
 		}
-		break
 
 	default:
 		log.Error("Unknown sub_type event from" + serverName + ": " + string(messageBytes))
