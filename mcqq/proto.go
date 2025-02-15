@@ -144,14 +144,16 @@ type BasePlayer struct {
 
 // BaseMessageEvent ...
 type BaseMessageEvent struct {
-	EventName  string     `json:"event_name"`
-	Message    string     `json:"message"`
-	MessageID  string     `json:"message_id"`
-	Player     BasePlayer `json:"player"`
-	PostType   string     `json:"post_type"`
-	ServerName string     `json:"server_name"`
-	SubType    string     `json:"sub_type"`
-	Timestamp  int64      `json:"timestamp"`
+	EventName     string     `json:"event_name"`
+	ServerType    string     `json:"server_type"`
+	ServerVersion string     `json:"server_version"`
+	Message       string     `json:"message"`
+	MessageID     string     `json:"message_id"`
+	Player        BasePlayer `json:"player"`
+	PostType      string     `json:"post_type"`
+	ServerName    string     `json:"server_name"`
+	SubType       string     `json:"sub_type"`
+	Timestamp     int64      `json:"timestamp"`
 }
 
 // BaseNoticeEvent ...

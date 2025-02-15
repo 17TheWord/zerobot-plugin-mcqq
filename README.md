@@ -13,13 +13,13 @@
 
 # 支持的服务端列表
 
+> 配套 **插件/模组** 请前往 [`鹊桥`](https://github.com/17TheWord/QueQiao) 仓库查看详情
+
 - Spigot
 - Forge
 - Fabric
 - Velocity
 - 原版端
-
-配套 **插件/模组** 请前往 [`鹊桥`](https://github.com/17TheWord/QueQiao) 仓库查看详情
 
 # 功能
 
