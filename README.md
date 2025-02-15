@@ -5,7 +5,7 @@
 基于 `ZeroBot` 的与 `Minecraft Server` 互通消息的插件
 
 - 支持 QQ 群
-- 支持# 文档
+- 支持多个服务器与多个群聊的互通
 
 # 文档
 
@@ -53,7 +53,7 @@
 
 - [`@17TheWord/nonebot-plugin-mcqq`](https://github.com/17TheWord/nonebot-plugin-mcqq)；适用于 `NoneBot` 的互通消息插件
 - [`@17TheWord/nonebot-adapter-minecraft`](https://github.com/17TheWord/nonebot-adapter-minecraft)：适用于 `NoneBot` 的
-  Minecraft Server 适配器
+  `Minecraft Server` 适配器
 - [`@CikeyQi/mc-plugin`](https://github.com/CikeyQi/mc-plugin)：适用于 `Yunzai` 的互通消息插件
 
 # 贡献与支持
@@ -65,4 +65,4 @@
 
 # 许可证
 
-本项目使用 [MIT](./LICENSE) 作为开源许可证。
+本项目使用 [`MIT`](./LICENSE) 作为开源许可证。
