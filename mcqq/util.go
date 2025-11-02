@@ -5,22 +5,26 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func getTargetServer(serverName string) *MinecraftBot {
-	if server, exist := McBots[serverName]; exist {
-		return server
+func getTargetServerWebsocketList(serverNameList []string) []*websocket.Conn {
+	targetServerWebsocketList := make([]*websocket.Conn, 0)
+	for _, serverName := range serverNameList {
+		if websocketConn, exist := McBots[serverName]; exist {
+			targetServerWebsocketList = append(targetServerWebsocketList, websocketConn)
+		}
 	}
-	return nil
+	return targetServerWebsocketList
 }
 
-func getTargetServerName(groupId int64) string {
+func getTargetServerNameList(groupId int64) []string {
+	var groupList []string
 	for serverName, server := range PluginConfig.ServerMap {
 		for _, group := range server.GroupList {
 			if group.GroupId == groupId {
-				return serverName
+				groupList = append(groupList, serverName)
 			}
 		}
 	}
-	return ""
+	return groupList
 }
 
 func contains(slice []int64, item int64) bool {

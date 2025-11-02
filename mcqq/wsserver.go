@@ -2,10 +2,11 @@ package mcqq
 
 import (
 	"fmt"
-	"github.com/RomiChan/websocket"
-	log "github.com/sirupsen/logrus"
 	"net/http"
 	"net/url"
+
+	"github.com/RomiChan/websocket"
+	log "github.com/sirupsen/logrus"
 )
 
 var upGrader = websocket.Upgrader{}
@@ -64,11 +65,7 @@ func handleWebsocket(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	McBots[selfName] = &MinecraftBot{
-		Websocket:  conn,
-		RconClient: nil,
-	}
-
+	McBots[selfName] = conn
 	log.Infof("Websocket from [%s] connected", selfName)
 
 	defer cleanupWebSocketConnection(conn, selfName)
@@ -90,7 +87,7 @@ func startWebsocketServer() {
 	httpHandler.HandleFunc("/minecraft/ws", handleWebsocket)
 	httpHandler.HandleFunc("/minecraft/ws/", handleWebsocket)
 
-	host := fmt.Sprintf("%s:%d", PluginConfig.Host, PluginConfig.Port)
+	host := fmt.Sprintf("%s:%d", PluginConfig.WebsocketServer.Host, PluginConfig.WebsocketServer.Port)
 	log.Infof("Starting server at %s...", host)
 	if err := http.ListenAndServe(host, httpHandler); err != nil {
 		log.Fatalf("Failed to start server on %s: %v", host, err)

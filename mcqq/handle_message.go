@@ -2,16 +2,21 @@ package mcqq
 
 import (
 	"encoding/json"
-	"fmt"
+	"strconv"
+	"time"
+
 	log "github.com/sirupsen/logrus"
 	zero "github.com/wdvxdr1123/ZeroBot"
 )
 
-func processQQMessage2MinecraftProtocol(ctx *zero.Ctx) WebsocketData {
-	messageTextComponentList := make([]MessageSegment, len(ctx.Event.Message)+3)
+func colorPtr(c Color) *Color {
+	return &c
+}
+
+func processQQMessage2MinecraftProtocol(ctx *zero.Ctx) []Component {
+	messageComponentList := make([]Component, len(ctx.Event.Message)+3)
 	groupNameMap := map[int64]string{}
 
-	// 移除无效的初始赋值
 	var groupName string
 
 	if value, exist := groupNameMap[ctx.Event.GroupID]; exist {
@@ -22,66 +27,73 @@ func processQQMessage2MinecraftProtocol(ctx *zero.Ctx) WebsocketData {
 		groupName = groupInfo.Name
 	}
 
-	messageTextComponentList[0] = MessageSegment{Type: "text", Data: TextComponent{Text: groupName}}
+	groupName = " [" + groupName + "] "
+	messageComponentList[0] = Component{Text: &groupName, Color: colorPtr(Aqua)}
 
 	nickname := ctx.Event.Sender.NickName
 	if nickname == "" {
 		nickname = ctx.Event.Sender.Card
 	}
 
-	messageTextComponentList[1] = MessageSegment{Type: "text", Data: TextComponent{Text: nickname}}
+	messageComponentList[1] = Component{Text: &nickname, Color: colorPtr(Green)}
 
-	messageTextComponentList[2] = MessageSegment{Type: "text", Data: TextComponent{Text: "说："}}
+	var sayText = "说: "
+	messageComponentList[2] = Component{Text: &sayText, Color: colorPtr(White)}
 
 	for i := 0; i < len(ctx.Event.Message); i++ {
-		var tempTextComponent TextComponent
+		var text string
+		var color Color
 		if ctx.Event.Message[i].Type == "text" {
-			tempTextComponent = TextComponent{Text: ctx.Event.Message[i].Data["text"]}
+			text = ctx.Event.Message[i].Data["text"]
+			color = White
 		} else if ctx.Event.Message[i].Type == "image" {
-			tempTextComponent = TextComponent{
-				Text:  "[图片]",
-				Color: Aqua,
-				HoverEvent: &HoverEvent{
-					Action: ShowText,
-					Text:   []BaseComponent{{Text: fmt.Sprintf("[[CICode,url=%s,name=图片]]", ctx.Event.Message[i].Data["url"])}},
-				},
+			if PluginConfig.ChatImage {
+				url := ctx.Event.Message[i].Data["url"]
+				text = "[[CICode,url=" + url + ",name=图片]]"
+			} else {
+				text = "[图片]"
 			}
+			color = LightPurple
 		} else {
-			tempTextComponent = TextComponent{Text: "未知消息类型"}
+			text = ctx.Event.Message[i].Type
+			color = Gray
 		}
-		messageTextComponentList[i+3] = MessageSegment{Type: "text", Data: tempTextComponent}
+		messageComponentList[i+3] = Component{Text: &text, Color: &color}
 	}
 
-	return WebsocketData{API: "send_msg", Data: messageTextComponentList}
+	return messageComponentList
 }
 
 func handleQQMessage(ctx *zero.Ctx) {
+	log.Info("正在处理来自QQ群 ", ctx.Event.GroupID, " 的消息...")
 	protoMessage := processQQMessage2MinecraftProtocol(ctx)
+	log.Info("处理消息完成，准备发送到Minecraft服务器...")
 
-	jsonData, jsonErr := json.Marshal(protoMessage)
-	jsonString := string(jsonData)
-	if jsonErr != nil {
-		log.Errorln("Failed to convert protoMessage to json:", jsonErr)
+	messageData := map[string]interface{}{"message": protoMessage}
+
+	timestamp := time.Now().UnixMilli()
+	echoId := strconv.FormatInt(timestamp, 10)
+	websocketData := WebsocketData{"send_msg", messageData, echoId}
+
+	targetServerNameList := getTargetServerNameList(ctx.Event.GroupID)
+	if len(targetServerNameList) == 0 {
+		log.Errorf("No target server found for group: %d", ctx.Event.GroupID)
 		return
 	}
 
-	targetServername := getTargetServerName(ctx.Event.GroupID)
-	if targetServername == "" {
-		log.Errorf("Failed to get target server name with group by: %d", ctx.Event.GroupID)
+	targetServerList := getTargetServerWebsocketList(targetServerNameList)
+	if len(targetServerList) == 0 {
+		log.Errorf("No active websocket connection for group: %d", ctx.Event.GroupID)
 		return
 	}
 
-	targetServer := getTargetServer(targetServername)
-	if targetServer == nil {
-		log.Errorf("Failed to get target server [%s] with group by: %d", targetServername, ctx.Event.GroupID)
-		return
+	for _, targetServer := range targetServerList {
+		websocketErr := targetServer.WriteJSON(websocketData)
+		if websocketErr != nil {
+			log.Errorln("Failed to send message to Minecraft server:", websocketErr)
+		}
 	}
 
-	websocketErr := targetServer.Websocket.WriteJSON(jsonString)
-	if websocketErr != nil {
-		return
-	}
-	log.Infoln("Send message to Minecraft:", jsonString)
 }
 
 func handleMinecraftMessage(messageBytes []byte) {
@@ -91,6 +103,13 @@ func handleMinecraftMessage(messageBytes []byte) {
 		log.Errorln("Error unmarshalling Minecraft message: ")
 		log.Errorln(string(messageBytes))
 		log.Errorln(err)
+		return
+	}
+
+	postType := base["post_type"].(string)
+
+	if postType == "response" {
+		log.Info("接收到响应消息: " + string(messageBytes))
 		return
 	}
 
@@ -130,7 +149,7 @@ func handleMinecraftMessage(messageBytes []byte) {
 		}
 
 	default:
-		log.Error("Unknown sub_type event from" + serverName + ": " + string(messageBytes))
+		log.Error("Unsupported sub_type event from" + serverName + ": " + string(messageBytes))
 		return
 	}
 

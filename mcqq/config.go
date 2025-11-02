@@ -1,26 +1,31 @@
 package mcqq
 
-type Group struct {
+type GroupConfig struct {
 	GroupId int64
 	BotId   int64
 }
 
-type Server struct {
-	GroupList []Group
+type ServerConfig struct {
+	GroupList []GroupConfig
 	RconMsg   bool
-	RconCmd   bool
 }
 
-type ForwardServer struct {
+type WebsocketClientConfig struct {
 	ServerName string
 	Url        string
 }
 
+type WebsocketServerConfig struct {
+	Enable bool
+	Host   string
+	Port   int
+}
+
 type Config struct {
-	Host            string
-	Port            int
-	ForwardUrlList  []ForwardServer
-	ServerMap       map[string]Server
+	WebsocketServer WebsocketServerConfig
+	WebsocketClient []WebsocketClientConfig
+	ServerMap       map[string]ServerConfig
 	CommandPriority int
+	ChatImage       bool
 	AccessToken     string
 }

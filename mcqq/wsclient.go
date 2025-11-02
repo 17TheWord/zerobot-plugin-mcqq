@@ -1,10 +1,11 @@
 package mcqq
 
 import (
-	"github.com/RomiChan/websocket"
-	log "github.com/sirupsen/logrus"
 	"net/http"
 	"time"
+
+	"github.com/RomiChan/websocket"
+	log "github.com/sirupsen/logrus"
 )
 
 var dialer = websocket.Dialer{
@@ -23,11 +24,7 @@ func forwardWebsocket(serverName string, url string) {
 		return
 	}
 
-	McBots[serverName] = &MinecraftBot{
-		Websocket:  conn,
-		RconClient: nil,
-	}
-
+	McBots[serverName] = conn
 	log.Infof("Connected to websocket [%s]", serverName)
 
 	defer cleanupWebSocketConnection(conn, serverName)
@@ -43,7 +40,7 @@ func forwardWebsocket(serverName string, url string) {
 }
 
 func startWebsocketClient() {
-	for _, server := range PluginConfig.ForwardUrlList {
+	for _, server := range PluginConfig.WebsocketClient {
 		go forwardWebsocket(server.ServerName, server.Url)
 	}
 }

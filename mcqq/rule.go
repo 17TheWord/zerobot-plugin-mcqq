@@ -2,8 +2,13 @@ package mcqq
 
 import zero "github.com/wdvxdr1123/ZeroBot"
 
-var GroupList []int64
+var groupIdSet = make(map[int64]struct{})
 
 func GroupRule(ctx *zero.Ctx) bool {
-	return zero.OnlyGroup(ctx) && contains(GroupList, ctx.Event.GroupID)
+	if !zero.OnlyGroup(ctx) {
+		return false
+	}
+	groupId := ctx.Event.GroupID
+	_, ok := groupIdSet[groupId]
+	return ok
 }
