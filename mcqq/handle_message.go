@@ -43,22 +43,52 @@ func processQQMessage2MinecraftProtocol(ctx *zero.Ctx) []Component {
 	for i := 0; i < len(ctx.Event.Message); i++ {
 		var text string
 		var color Color
+		var hoverEvent *HoverEvent = nil
+		var clickEvent *ClickEvent = nil
 		if ctx.Event.Message[i].Type == "text" {
 			text = ctx.Event.Message[i].Data["text"]
 			color = White
 		} else if ctx.Event.Message[i].Type == "image" {
+			url := ctx.Event.Message[i].Data["url"]
 			if PluginConfig.ChatImage {
-				url := ctx.Event.Message[i].Data["url"]
 				text = "[[CICode,url=" + url + ",name=图片]]"
 			} else {
 				text = "[图片]"
+				hoverText := "点击前往浏览器查看图片"
+				hoverEvent = &HoverEvent{
+					Action: "show_text",
+					Contents: Component{
+						Text:  &hoverText,
+						Color: colorPtr(LightPurple),
+					},
+				}
+				clickEvent = &ClickEvent{
+					Action: "open_url",
+					Value:  url,
+				}
+			}
+			color = LightPurple
+		} else if ctx.Event.Message[i].Type == "video" {
+			text = "[视频]"
+			url := ctx.Event.Message[i].Data["url"]
+			hoverText := "点击前往浏览器查看视频"
+			hoverEvent = &HoverEvent{
+				Action: "show_text",
+				Contents: Component{
+					Text:  &hoverText,
+					Color: colorPtr(LightPurple),
+				},
+			}
+			clickEvent = &ClickEvent{
+				Action: "open_url",
+				Value:  url,
 			}
 			color = LightPurple
 		} else {
 			text = ctx.Event.Message[i].Type
 			color = Gray
 		}
-		messageComponentList[i+3] = Component{Text: &text, Color: &color}
+		messageComponentList[i+3] = Component{Text: &text, Color: &color, HoverEvent: hoverEvent, ClickEvent: clickEvent}
 	}
 
 	return messageComponentList
