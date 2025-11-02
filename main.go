@@ -19,38 +19,42 @@ func init() {
 
 func main() {
 	mcqq.PluginConfig = mcqq.Config{
-		Host: "127.0.0.1",
-		Port: 8085,
-		ForwardUrlList: []mcqq.ForwardServer{
+		WebsocketServer: mcqq.WebsocketServerConfig{
+			Enable: false,
+			Host:   "127.0.0.1",
+			Port:   8080,
+		},
+		WebsocketClient: []mcqq.WebsocketClientConfig{
 			{
 				ServerName: "Server",
 				Url:        "ws://127.0.0.1:8080",
 			},
 		},
 		AccessToken:     "",
-		CommandPriority: 1,
-		ServerMap: map[string]mcqq.Server{
+		CommandPriority: 2,
+		ChatImage:       true,
+		ServerMap: map[string]mcqq.ServerConfig{
 			"Server": {
-				GroupList: []mcqq.Group{
+				GroupList: []mcqq.GroupConfig{
 					{
 						BotId:   0,
 						GroupId: 0,
 					},
 				},
-				RconCmd: false,
 				RconMsg: false,
 			},
 		},
 	}
+	mcqq.InitPlugin()
 	zero.RunAndBlock(&zero.Config{
 		NickName:      []string{"bot"},
 		CommandPrefix: "/",
 		SuperUsers:    []int64{0},
 		Driver: []zero.Driver{
 			// 正向 WS
-			driver.NewWebSocketClient("ws://127.0.0.1:6700", ""),
+			//driver.NewWebSocketClient("ws://127.0.0.1:6700", ""),
 			// 反向 WS
-			driver.NewWebSocketServer(16, "ws://127.0.0.1:8081", ""),
+			driver.NewWebSocketServer(16, "ws://127.0.0.1:9090", ""),
 		},
 	}, nil)
 }
