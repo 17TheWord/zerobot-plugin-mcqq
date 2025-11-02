@@ -2,26 +2,23 @@
 
 # ZeroBot-Plugin-MCQQ
 
-基于 `ZeroBot` 的与 `Minecraft Server` 互通消息的插件
+`mcqq` 的 `ZeroBot` 插件实现
 
 - 支持 QQ 群
-- 支持多个服务器与多个群聊的互通
 
-# 文档
+## 使用
 
-- [`Wiki`](https://github.com/17TheWord/zerobot-plugin-mcqq/wiki)
+- 克隆本项目
 
-# 支持的服务端列表
+- 修改 `main.go` 中的配置
 
-> 配套 **插件/模组** 请前往 [`鹊桥`](https://github.com/17TheWord/QueQiao) 仓库查看详情
+- 启动 `go run main.go`
 
-- Spigot
-- Forge
-- Fabric
-- Velocity
-- 原版端
+## 对接 Minecraft 服务器
 
-# 功能
+配套 **插件/模组** 请前往 [`鹊桥`](https://github.com/17TheWord/QueQiao) 仓库查看详情
+
+## 功能
 
 - 推送消息列表
 
@@ -30,39 +27,32 @@
         - [x] 玩家聊天信息
         - [x] 玩家死亡信息（死亡信息为英文，原版端不适用，用**正则**匹配死亡信息是大工程！）
     - QQ -> 服务器
-        - [x] 指令
+        - [ ] 指令
         - [x] 群员聊天文本
         - [x] 图片、视频等内容转换为可点击在浏览器打开的 `[图片]`、`[视频]`
-        - [x] 借助 [`@kitUIN/ChatImage`](https://github.com/kitUIN/ChatImage) 直接在游戏内显示图片
+        - [x] (可选功能)借助 [`@kitUIN/ChatImage`](https://github.com/kitUIN/ChatImage) 直接在游戏内显示图片
 
-- 特殊消息支持
-    - 群聊
-        - [x] @ 消息
-        - [x] 回复消息（转换成@消息）
-    - 频道
-        - [x] @ 消息
-        - [x] 回复消息（转换成@消息）
-    - 未支持的消息已被替换，如： `[未知消息类型]` 等等
+> 个人能力问题，暂未实现 `Command`、`Title`、`ActionBar` 等内容，欢迎 `PR`
 
-# 特别感谢
+## 特别感谢
 
 - [`ZeroBot`](https://github.com/wdvxdr1123/ZeroBot)：插件使用的开发框架。
 - [`@kitUIN/ChatImage`](https://github.com/kitUIN/ChatImage)：用于在游戏内显示图片的插件。
 
-# 其他项目
+## 其他项目
 
 - [`@17TheWord/nonebot-plugin-mcqq`](https://github.com/17TheWord/nonebot-plugin-mcqq)；适用于 `NoneBot` 的互通消息插件
 - [`@17TheWord/nonebot-adapter-minecraft`](https://github.com/17TheWord/nonebot-adapter-minecraft)：适用于 `NoneBot` 的
   `Minecraft Server` 适配器
 - [`@CikeyQi/mc-plugin`](https://github.com/CikeyQi/mc-plugin)：适用于 `Yunzai` 的互通消息插件
 
-# 贡献与支持
+## 贡献与支持
 
 觉得好用可以给这个项目点个 `Star` 或者去 [爱发电](https://afdian.com/a/17TheWord) 投喂我。
 
 有意见或者建议也欢迎提交 [Issues](https://github.com/17TheWord/zerobot-plugin-mcqq/issues)
 和 [Pull requests](https://github.com/17TheWord/zerobot-plugin-mcqq/pulls)。
 
-# 许可证
+## 许可证
 
 本项目使用 [`MIT`](./LICENSE) 作为开源许可证。
