@@ -27,14 +27,6 @@ func getTargetServerNameList(groupId int64) []string {
 	return groupList
 }
 
-func contains(slice []int64, item int64) bool {
-	for _, v := range slice {
-		if v == item {
-			return true
-		}
-	}
-	return false
-}
 func cleanupWebSocketConnection(conn *websocket.Conn, serverName string) {
 	err := conn.Close()
 	if err != nil {
