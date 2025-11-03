@@ -28,7 +28,7 @@ func processQQMessageList(ctx *zero.Ctx, message message.Message, replyModel boo
 		var ciCode string
 
 		if msgType == "reply" {
-			text = "回复内容:\n\n"
+			text = "回复内容:\n"
 			color = Gray
 		} else if msgType == "text" {
 			text = msgData["text"]
@@ -194,7 +194,7 @@ func processQQMessage2MinecraftProtocol(ctx *zero.Ctx) []*Component {
 		}
 		replyComponentList := processQQMessageList(ctx, replyMsg.Elements, true)
 
-		var replyText = " 回复 @" + replyUserName + " 的消息: "
+		var replyText = "（回复 @" + replyUserName + "）: "
 
 		newMsg = newMsg[2:]
 		qqMessageComponentList := processQQMessageList(ctx, newMsg, false)
@@ -205,7 +205,7 @@ func processQQMessage2MinecraftProtocol(ctx *zero.Ctx) []*Component {
 		messageComponentList = append(messageComponentList, qqMessageComponentList...)
 	} else {
 		qqMessageComponentList := processQQMessageList(ctx, newMsg, false)
-		var sayText = "说: "
+		var sayText = "："
 		messageComponentList[2] = &Component{Text: &sayText, Color: colorPtr(White), Extra: qqMessageComponentList}
 	}
 
