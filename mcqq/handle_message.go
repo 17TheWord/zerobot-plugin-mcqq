@@ -7,88 +7,206 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	zero "github.com/wdvxdr1123/ZeroBot"
+	"github.com/wdvxdr1123/ZeroBot/message"
 )
 
 func colorPtr(c Color) *Color {
 	return &c
 }
 
-func processQQMessage2MinecraftProtocol(ctx *zero.Ctx) []Component {
-	messageComponentList := make([]Component, len(ctx.Event.Message)+3)
-	groupNameMap := map[int64]string{}
+// processQQMessageList 处理QQ消息列表，转换为Minecraft协议的Component列表
+func processQQMessageList(ctx *zero.Ctx, message message.Message, replyModel bool) []*Component {
+	messageList := make([]*Component, 0)
+	for i := 0; i < len(message); i++ {
+		msgType := message[i].Type
+		msgData := message[i].Data
 
-	var groupName string
-
-	if value, exist := groupNameMap[ctx.Event.GroupID]; exist {
-		groupName = value
-	} else {
-		groupInfo := ctx.GetGroupInfo(ctx.Event.GroupID, false)
-		groupNameMap[ctx.Event.GroupID] = groupInfo.Name
-		groupName = groupInfo.Name
-	}
-
-	groupName = " [" + groupName + "] "
-	messageComponentList[0] = Component{Text: &groupName, Color: colorPtr(Aqua)}
-
-	nickname := ctx.Event.Sender.NickName
-	if nickname == "" {
-		nickname = ctx.Event.Sender.Card
-	}
-
-	messageComponentList[1] = Component{Text: &nickname, Color: colorPtr(Green)}
-
-	var sayText = "说: "
-	messageComponentList[2] = Component{Text: &sayText, Color: colorPtr(White)}
-
-	for i := 0; i < len(ctx.Event.Message); i++ {
 		var text string
 		var color Color
 		var hoverEvent *HoverEvent = nil
 		var clickEvent *ClickEvent = nil
-		if ctx.Event.Message[i].Type == "text" {
-			text = ctx.Event.Message[i].Data["text"]
+		var ciCode string
+
+		if msgType == "reply" {
+			text = "回复内容:\n\n"
+			color = Gray
+		} else if msgType == "text" {
+			text = msgData["text"]
 			color = White
-		} else if ctx.Event.Message[i].Type == "image" {
-			url := ctx.Event.Message[i].Data["url"]
-			if PluginConfig.ChatImage {
-				text = "[[CICode,url=" + url + ",name=图片]]"
-			} else {
-				text = "[图片]"
-				hoverText := "点击前往浏览器查看图片"
-				hoverEvent = &HoverEvent{
-					Action: "show_text",
-					Contents: Component{
-						Text:  &hoverText,
-						Color: colorPtr(LightPurple),
-					},
-				}
-				clickEvent = &ClickEvent{
-					Action: "open_url",
-					Value:  url,
-				}
+		} else if msgType == "face" {
+			text = "[表情]"
+			color = Gold
+			faceId := "表情ID: " + msgData["id"]
+			hoverEvent = &HoverEvent{
+				Action: "show_text",
+				Contents: Component{
+					Text:  &faceId,
+					Color: colorPtr(DarkPurple),
+				},
 			}
+		} else if msgType == "file" {
+			text = "[文件]"
+			color = Gold
+			fileName := msgData["name"]
+			hoverEvent = &HoverEvent{
+				Action: "show_text",
+				Contents: Component{
+					Text:  &fileName,
+					Color: colorPtr(DarkPurple),
+				},
+			}
+		} else if msgType == "image" {
+			url := msgData["url"]
+			ciCode = "[[CICode,url=" + url + ",name=图片]]"
+
+			text = "[图片]"
 			color = LightPurple
-		} else if ctx.Event.Message[i].Type == "video" {
-			text = "[视频]"
-			url := ctx.Event.Message[i].Data["url"]
-			hoverText := "点击前往浏览器查看视频"
+			hoverText := "点击前往浏览器查看图片"
 			hoverEvent = &HoverEvent{
 				Action: "show_text",
 				Contents: Component{
 					Text:  &hoverText,
-					Color: colorPtr(LightPurple),
+					Color: colorPtr(DarkPurple),
 				},
 			}
 			clickEvent = &ClickEvent{
 				Action: "open_url",
 				Value:  url,
 			}
+		} else if msgType == "record" {
+			text = "[语音]"
+			color = Gold
+		} else if msgType == "video" {
+			text = "[视频]"
 			color = LightPurple
+			url := msgData["url"]
+			hoverText := "点击前往浏览器查看视频"
+			hoverEvent = &HoverEvent{
+				Action: "show_text",
+				Contents: Component{
+					Text:  &hoverText,
+					Color: colorPtr(DarkPurple),
+				},
+			}
+			clickEvent = &ClickEvent{
+				Action: "open_url",
+				Value:  url,
+			}
+		} else if msgType == "at" {
+			var name string
+			if msgData["qq"] == "all" {
+				name = "@所有人"
+			} else {
+				qqStr := msgData["qq"]
+				qqInt, err := strconv.ParseInt(qqStr, 10, 64)
+				if err == nil {
+					// 优先从缓存获取
+					if groupMap, ok := GroupMemberNameMap[ctx.Event.GroupID]; ok {
+						if cachedName, ok2 := groupMap[qqInt]; ok2 && cachedName != "" {
+							name = cachedName
+						} else {
+							groupMemberInfo := ctx.GetThisGroupMemberInfo(qqInt, false)
+							if !groupMemberInfo.Exists() {
+								name = "@" + qqStr
+							} else {
+								name = groupMemberInfo.Get("card").String()
+								if name == "" {
+									name = groupMemberInfo.Get("nickname").String()
+								}
+								// 写入缓存
+								GroupMemberNameMap[ctx.Event.GroupID][qqInt] = name
+							}
+						}
+					} else {
+						// 初始化群成员缓存map
+						GroupMemberNameMap[ctx.Event.GroupID] = map[int64]string{}
+						groupMemberInfo := ctx.GetThisGroupMemberInfo(qqInt, false)
+						if !groupMemberInfo.Exists() {
+							name = "@" + qqStr
+						} else {
+							name = groupMemberInfo.Get("card").String()
+							if name == "" {
+								name = groupMemberInfo.Get("nickname").String()
+							}
+							// 写入缓存
+							GroupMemberNameMap[ctx.Event.GroupID][qqInt] = name
+						}
+					}
+				} else {
+					name = "@" + qqStr
+				}
+			}
+			text = "@" + name
+			color = Green
 		} else {
-			text = ctx.Event.Message[i].Type
+			text = "[" + msgType + "]"
 			color = Gray
 		}
-		messageComponentList[i+3] = Component{Text: &text, Color: &color, HoverEvent: hoverEvent, ClickEvent: clickEvent}
+
+		var component Component
+		if replyModel {
+			component = Component{Text: &text, Color: &color}
+		} else {
+			if PluginConfig.ChatImage {
+				text = ciCode
+				component = Component{Text: &text}
+			} else {
+				component = Component{Text: &text, Color: &color, HoverEvent: hoverEvent, ClickEvent: clickEvent}
+			}
+		}
+
+		messageList = append(messageList, &component)
+	}
+	return messageList
+}
+
+func processQQMessage2MinecraftProtocol(ctx *zero.Ctx) []*Component {
+	messageComponentList := make([]*Component, 3)
+
+	var groupName string
+	if value, exist := GroupNameMap[ctx.Event.GroupID]; exist {
+		groupName = value
+	} else {
+		groupInfo := ctx.GetGroupInfo(ctx.Event.GroupID, false)
+		GroupNameMap[ctx.Event.GroupID] = groupInfo.Name
+		groupName = groupInfo.Name
+	}
+
+	groupName = " [" + groupName + "] "
+	messageComponentList[0] = &Component{Text: &groupName, Color: colorPtr(Aqua)}
+
+	nickname := ctx.Event.Sender.NickName
+	if nickname == "" {
+		nickname = ctx.Event.Sender.Card
+	}
+
+	messageComponentList[1] = &Component{Text: &nickname, Color: colorPtr(Green)}
+
+	newMsg := make(message.Message, len(ctx.Event.Message))
+	copy(newMsg, ctx.Event.Message)
+
+	if newMsg[0].Type == "reply" {
+		replyMsgId := newMsg[0].Data["id"]
+		replyMsg := ctx.GetMessage(replyMsgId)
+		replyUserName := replyMsg.Sender.Card
+		if replyUserName == "" {
+			replyUserName = replyMsg.Sender.NickName
+		}
+		replyComponentList := processQQMessageList(ctx, replyMsg.Elements, true)
+
+		var replyText = " 回复 @" + replyUserName + " 的消息: "
+
+		newMsg = newMsg[2:]
+		qqMessageComponentList := processQQMessageList(ctx, newMsg, false)
+		messageComponentList[2] = &Component{Text: &replyText, Color: colorPtr(Gray), HoverEvent: &HoverEvent{
+			Action:   "show_text",
+			Contents: replyComponentList,
+		}}
+		messageComponentList = append(messageComponentList, qqMessageComponentList...)
+	} else {
+		qqMessageComponentList := processQQMessageList(ctx, newMsg, false)
+		var sayText = "说: "
+		messageComponentList[2] = &Component{Text: &sayText, Color: colorPtr(White), Extra: qqMessageComponentList}
 	}
 
 	return messageComponentList
