@@ -264,11 +264,11 @@ func handleMinecraftMessage(messageBytes []byte) {
 	serverName := base["server_name"].(string)
 	subType := base["sub_type"].(string)
 
-	var message = "[" + serverName + "] "
+	var messageList = "[" + serverName + "] "
 
 	switch subType {
-	case "chat", "death":
-		var messageEvent BaseMessageEvent
+	case "player_chat":
+		var messageEvent PlayerChatEvent
 
 		err := json.Unmarshal(messageBytes, &messageEvent)
 		if err != nil {
@@ -276,33 +276,48 @@ func handleMinecraftMessage(messageBytes []byte) {
 			return
 		}
 
-		if messageEvent.SubType == "chat" {
-			message += messageEvent.Player.Nickname + " 说：" + messageEvent.Message
-		} else {
-			message += messageEvent.Message
-		}
+		messageList += messageEvent.Player.Nickname + " 说：" + messageEvent.Message
 
-	case "join", "quit":
-		var noticeEvent BaseNoticeEvent
+	case "player_join", "player_quit":
+		var noticeEvent PlayerNoticeEvent
 		err := json.Unmarshal(messageBytes, &noticeEvent)
 		if err != nil {
 			log.Error("Error unmarshalling NoticeEvent: ", err)
 			return
 		}
 
-		if noticeEvent.SubType == "join" {
-			message += noticeEvent.Player.Nickname + " 加入了服务器"
+		if noticeEvent.SubType == "player_join" {
+			messageList += noticeEvent.Player.Nickname + " 加入了服务器"
 		} else {
-			message += noticeEvent.Player.Nickname + " 退出了服务器"
+			messageList += noticeEvent.Player.Nickname + " 退出了服务器"
 		}
+	case "player_death":
+		var deathEvent PlayerDeathEvent
+		err := json.Unmarshal(messageBytes, &deathEvent)
+		if err != nil {
+			log.Error("Error unmarshalling DeathEvent: ", err)
+			return
+		}
+
+		messageList += deathEvent.Death.Text
+
+	case "player_achievement":
+		var achievementEvent PlayerAchievementEvent
+		err := json.Unmarshal(messageBytes, &achievementEvent)
+		if err != nil {
+			log.Error("Error unmarshalling AchievementEvent: ", err)
+			return
+		}
+
+		messageList += achievementEvent.Achievement.Text
 
 	default:
 		log.Error("Unsupported sub_type event from" + serverName + ": " + string(messageBytes))
 		return
 	}
 
-	log.Infof("Received message from [%s]: %s", serverName, message)
-	sendMcMsg2QQGroup(serverName, message)
+	log.Infof("Received message from [%s]: %s", serverName, messageList)
+	sendMcMsg2QQGroup(serverName, messageList)
 }
 
 func sendMcMsg2QQGroup(serverName string, message string) {
