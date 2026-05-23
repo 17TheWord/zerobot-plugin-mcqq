@@ -3,6 +3,7 @@ package mcqq
 import (
 	"encoding/json"
 	"strconv"
+	"sync/atomic"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -10,13 +11,16 @@ import (
 	"github.com/wdvxdr1123/ZeroBot/message"
 )
 
+var echoSequence uint64
+
 func colorPtr(c Color) *Color {
 	return &c
 }
 
 func newWebsocketData(api string, data interface{}) WebsocketData {
-	timestamp := time.Now().UnixMilli()
-	echoId := strconv.FormatInt(timestamp, 10)
+	timestamp := time.Now().UnixNano()
+	sequence := atomic.AddUint64(&echoSequence, 1)
+	echoId := strconv.FormatInt(timestamp, 10) + "-" + strconv.FormatUint(sequence, 10)
 	return WebsocketData{api, data, echoId}
 }
 
@@ -288,6 +292,7 @@ func handleMinecraftMessage(messageBytes []byte) {
 		if err := json.Unmarshal(messageBytes, &response); err != nil {
 			log.Warningln("Error unmarshalling API response: ", err)
 		}
+		handleAPIResponse(response)
 		log.Info("接收到响应消息: " + string(messageBytes))
 		return
 	}

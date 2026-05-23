@@ -48,5 +48,6 @@ func InitPlugin() {
 		log.Info("未配置任何 Websocket 客户端。")
 	}
 
+	zero.OnCommand("mc", GroupRule, zero.SuperUserPermission).SetBlock(true).SetPriority(PluginConfig.CommandPriority).Handle(handleMCAPICommand)
 	zero.OnMessage(GroupRule).SetBlock(false).SetPriority(PluginConfig.CommandPriority + 1).Handle(handleQQMessage)
 }

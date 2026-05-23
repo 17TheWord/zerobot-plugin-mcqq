@@ -127,6 +127,6 @@ type Component struct {
 
 type WebsocketData struct {
 	API  string      `json:"api"`
-	Data interface{} `json:"data"`
+	Data interface{} `json:"data,omitempty"`
 	Echo string      `json:"echo,omitempty"`
 }

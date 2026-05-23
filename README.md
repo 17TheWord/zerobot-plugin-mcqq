@@ -103,12 +103,38 @@
         - [x] 玩家死亡信息（死亡信息为英文，原版端不适用，用**正则**匹配死亡信息是大工程！）
         - [x] 玩家成就信息
     - QQ -> 服务器
-        - [ ] 指令
+        - [x] 鹊桥 V2 API 命令调用
         - [x] 群员聊天文本
         - [x] 图片、视频等内容转换为可点击在浏览器打开的 `[图片]`、`[视频]`
         - [x] (可选功能)借助 [`@kitUIN/ChatImage`](https://github.com/kitUIN/ChatImage) 直接在游戏内显示图片
 
-> 暂未实现从 QQ 主动调用 `Rcon`、`Title`、`ActionBar`、服务器状态查询等内容，欢迎 `PR`
+## QQ 命令
+
+以下命令需要 ZeroBot `super_users` 权限，并且只能在已配置的 QQ 群中使用。命令会通过鹊桥 V2 API 发送到 Minecraft 端，并根据响应包的 `echo` 将结果返回到原 QQ 群。
+
+```text
+/mc status <server>
+/mc rcon <server> <command>
+/mc title <server> <title> [| <subtitle>]
+/mc actionbar <server> <message>
+/mc private <server> <uuid|-> <nickname|-> <message>
+```
+
+示例：
+
+```text
+/mc status Server
+/mc rcon Server list
+/mc title Server 服务器公告 | 欢迎回来
+/mc actionbar Server 当前正在维护
+/mc private Server - Steve 你好
+```
+
+说明：
+
+- `server` 需要和 `mcqq.server_map` 中的服务器名一致。
+- `/mc private` 中 `uuid` 或 `nickname` 至少填写一个，不使用的字段写 `-`。
+- API 响应默认等待 60 秒，超时会向原 QQ 群发送超时提示。
 
 ## 特别感谢
 
