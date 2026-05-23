@@ -57,13 +57,14 @@ func processQQMessageList(ctx *zero.Ctx, message message.Message, replyModel boo
 		var clickEvent *ClickEvent = nil
 		var ciCode string
 
-		if msgType == "reply" {
+		switch msgType {
+		case "reply":
 			text = "回复内容:\n"
 			color = Gray
-		} else if msgType == "text" {
+		case "text":
 			text = msgData["text"]
 			color = White
-		} else if msgType == "face" {
+		case "face":
 			text = "[表情]"
 			color = Gold
 			faceId := "表情ID: " + msgData["id"]
@@ -74,7 +75,7 @@ func processQQMessageList(ctx *zero.Ctx, message message.Message, replyModel boo
 					Color: colorPtr(DarkPurple),
 				},
 			}
-		} else if msgType == "file" {
+		case "file":
 			text = "[文件]"
 			color = Gold
 			fileName := msgData["name"]
@@ -85,7 +86,7 @@ func processQQMessageList(ctx *zero.Ctx, message message.Message, replyModel boo
 					Color: colorPtr(DarkPurple),
 				},
 			}
-		} else if msgType == "image" {
+		case "image":
 			url := msgData["url"]
 			ciCode = "[[CICode,url=" + url + ",name=图片]]"
 
@@ -103,10 +104,10 @@ func processQQMessageList(ctx *zero.Ctx, message message.Message, replyModel boo
 				Action: "open_url",
 				Value:  url,
 			}
-		} else if msgType == "record" {
+		case "record":
 			text = "[语音]"
 			color = Gold
-		} else if msgType == "video" {
+		case "video":
 			text = "[视频]"
 			color = LightPurple
 			url := msgData["url"]
@@ -122,7 +123,7 @@ func processQQMessageList(ctx *zero.Ctx, message message.Message, replyModel boo
 				Action: "open_url",
 				Value:  url,
 			}
-		} else if msgType == "at" {
+		case "at":
 			var name string
 			if msgData["qq"] == "all" {
 				name = "@所有人"
@@ -168,7 +169,7 @@ func processQQMessageList(ctx *zero.Ctx, message message.Message, replyModel boo
 			}
 			text = "@" + name
 			color = Green
-		} else {
+		default:
 			text = "[" + msgType + "]"
 			color = Gray
 		}
