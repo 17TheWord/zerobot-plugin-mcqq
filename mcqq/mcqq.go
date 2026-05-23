@@ -1,13 +1,12 @@
 package mcqq
 
 import (
-	"github.com/RomiChan/websocket"
 	log "github.com/sirupsen/logrus"
 	zero "github.com/wdvxdr1123/ZeroBot"
 )
 
 var PluginConfig = Config{}
-var McBots = make(map[string]*websocket.Conn)
+var mcConnections = newConnectionStore()
 
 func InitPlugin() {
 	groupIdSet = make(map[int64]struct{})

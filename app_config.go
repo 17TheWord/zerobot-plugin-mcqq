@@ -109,6 +109,7 @@ func validateConfig(config *AppConfig) error {
 	if len(config.Mcqq.ServerMap) == 0 {
 		errs = append(errs, "mcqq.server_map 不能为空")
 	}
+	groupServerMap := make(map[int64][]string)
 	for serverName, server := range config.Mcqq.ServerMap {
 		if strings.TrimSpace(serverName) == "" {
 			errs = append(errs, "mcqq.server_map 不能包含空服务器名")
@@ -122,8 +123,19 @@ func validateConfig(config *AppConfig) error {
 			}
 			if group.GroupId == 0 {
 				errs = append(errs, fmt.Sprintf("mcqq.server_map.%s.group_list[%d].group_id 不能为空或 0", serverName, i))
+			} else {
+				groupServerMap[group.GroupId] = append(groupServerMap[group.GroupId], serverName)
 			}
 		}
+	}
+	for groupID, serverNames := range groupServerMap {
+		if len(serverNames) > 1 {
+			errs = append(errs, fmt.Sprintf("group_id %d 同时映射到多个服务器: %s", groupID, strings.Join(serverNames, ", ")))
+		}
+	}
+
+	if !config.Mcqq.WebsocketServer.Enable && len(config.Mcqq.WebsocketClient) == 0 {
+		errs = append(errs, "mcqq.websocket_server.enable 为 false 时，mcqq.websocket_client 至少需要配置一个连接")
 	}
 
 	for i, websocketClient := range config.Mcqq.WebsocketClient {
@@ -134,6 +146,12 @@ func validateConfig(config *AppConfig) error {
 		}
 		if websocketClient.Url == "" {
 			errs = append(errs, fmt.Sprintf("mcqq.websocket_client[%d].url 不能为空", i))
+		}
+		if websocketClient.ReconnectInterval < 0 {
+			errs = append(errs, fmt.Sprintf("mcqq.websocket_client[%d].reconnect_interval 不能小于 0", i))
+		}
+		if websocketClient.ReconnectMaxTimes < 0 {
+			errs = append(errs, fmt.Sprintf("mcqq.websocket_client[%d].reconnect_max_times 不能小于 0", i))
 		}
 	}
 

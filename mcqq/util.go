@@ -8,7 +8,7 @@ import (
 func getTargetServerWebsocketList(serverNameList []string) []*websocket.Conn {
 	targetServerWebsocketList := make([]*websocket.Conn, 0)
 	for _, serverName := range serverNameList {
-		if websocketConn, exist := McBots[serverName]; exist {
+		if websocketConn, exist := mcConnections.get(serverName); exist {
 			targetServerWebsocketList = append(targetServerWebsocketList, websocketConn)
 		}
 	}
@@ -31,8 +31,8 @@ func cleanupWebSocketConnection(conn *websocket.Conn, serverName string) {
 	err := conn.Close()
 	if err != nil {
 		log.Infof("Close websocket connection from [%s] failed: %v", serverName, err)
-		return
 	}
-	delete(McBots, serverName)
-	log.Infof("Disconnected from websocket [%s]", serverName)
+	if mcConnections.deleteIfSame(serverName, conn) {
+		log.Infof("Disconnected from websocket [%s]", serverName)
+	}
 }

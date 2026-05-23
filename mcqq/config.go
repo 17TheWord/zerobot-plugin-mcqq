@@ -11,8 +11,10 @@ type ServerConfig struct {
 }
 
 type WebsocketClientConfig struct {
-	ServerName string `yaml:"server_name"`
-	Url        string `yaml:"url"`
+	ServerName        string `yaml:"server_name"`
+	Url               string `yaml:"url"`
+	ReconnectInterval int    `yaml:"reconnect_interval"`
+	ReconnectMaxTimes int    `yaml:"reconnect_max_times"`
 }
 
 type WebsocketServerConfig struct {

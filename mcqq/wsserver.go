@@ -52,7 +52,7 @@ func handleWebsocket(writer http.ResponseWriter, request *http.Request) {
 		}
 	}
 
-	if _, exists := McBots[selfName]; exists {
+	if mcConnections.exists(selfName) {
 		log.Warningf("X-Self-Name Header is already in use from %s with [%s]", request.RemoteAddr, selfName)
 		_, _ = writer.Write([]byte("X-Self-Name Header is already in use"))
 		return
@@ -65,7 +65,7 @@ func handleWebsocket(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	McBots[selfName] = conn
+	mcConnections.set(selfName, conn)
 	log.Infof("Websocket from [%s] connected", selfName)
 
 	defer cleanupWebSocketConnection(conn, selfName)

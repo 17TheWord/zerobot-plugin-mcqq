@@ -51,6 +51,10 @@ mcqq:
   websocket_client:
     - server_name: "Server"
       url: "ws://127.0.0.1:8080/minecraft/ws"
+      # 断线后的重连间隔，单位秒。配置为 0 时使用默认值 5。
+      reconnect_interval: 5
+      # 最大重连次数。配置为 0 表示无限重连。
+      reconnect_max_times: 0
 
   # Minecraft 服务器与 QQ 群路由映射。
   # 服务器名需要和鹊桥 Minecraft 端 config.yml 中的 server_name 保持一致。

@@ -38,6 +38,7 @@
 - QQ 群消息通过 `broadcast` API 广播到 Minecraft 服务器
 - Minecraft 事件通过 WebSocket JSON 推送到本插件
 - WebSocket Header 默认使用 `x-client-origin: zerobot`
+- WebSocket Client 支持断线自动重连，可在 `config.yml` 中配置 `reconnect_interval` 和 `reconnect_max_times`
 
 ## 功能
 

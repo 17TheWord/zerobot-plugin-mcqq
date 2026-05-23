@@ -47,7 +47,7 @@ The plugin can use either or both WebSocket modes:
 - Server mode: `WebsocketServer.Enable` starts an HTTP WebSocket server. Minecraft connects to this plugin and must provide `x-self-name`. If `AccessToken` is configured, `Authorization: Bearer <token>` is required.
 - Client mode: each `WebsocketClientConfig` starts a goroutine that connects to a Minecraft-side WebSocket URL. The plugin sends `x-client-origin: zerobot`, `x-self-name: <ServerName>`, and `Authorization: Bearer <AccessToken>` headers.
 
-Active Minecraft connections are stored in the global `McBots` map keyed by server name.
+Active Minecraft connections are managed by a mutex-protected connection store keyed by server name. Do not access connection maps directly; use the store/helper functions.
 
 ## Message Flow
 
@@ -83,6 +83,7 @@ Minecraft to QQ:
 - `ChatImage` changes image forwarding behavior. When enabled, image message text is replaced with ChatImage CICode for in-game image rendering.
 - `RconMsg` exists in `ServerConfig` but is not currently used by the implementation.
 - QueQiao `0.4.1+` uses `Translate` for death and achievement text. Prefer `translate.text`, then legacy `text`, then key fallback.
+- WebSocket client reconnect settings are configured per client with `reconnect_interval` seconds and `reconnect_max_times`; `0` max means reconnect indefinitely.
 - `main.go` is the application entrypoint. Keep deployment configuration in YAML rather than hard-coding values in Go.
 
 ## Protocol Expectations
@@ -113,7 +114,7 @@ Minecraft chat components are modeled in `mcqq/proto.go`. Preserve JSON tags and
 - Keep package code in `mcqq` unless adding a new executable entrypoint.
 - Keep runtime configuration in YAML. The default path is `config.yml`, and the repository should track `config.example.yml` rather than real local config files.
 - Preserve existing public struct field names unless a breaking change is intentional.
-- Be careful with global maps (`PluginConfig`, `McBots`, caches). Existing code does not use synchronization, so do not add concurrent writes casually without considering races.
+- Be careful with global maps (`PluginConfig`, caches). Minecraft WebSocket connections are protected by a connection store; keep connection access behind that abstraction.
 - Prefer exact JSON field names already used by QueQiao-compatible plugins/mods.
 - When adding support for new QQ message segments or Minecraft `sub_type` events, update conversion logic and relevant protocol/event structs together.
 - Do not reintroduce V1 protocol behavior unless explicitly requested. This adapter targets QueQiao Protocol V2 only.
