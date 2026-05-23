@@ -57,113 +57,120 @@ func processQQMessageList(ctx *zero.Ctx, message message.Message, replyModel boo
 		var clickEvent *ClickEvent = nil
 		var ciCode string
 
-		switch msgType {
-			case "reply":
-				text = "回复内容:\n"
-				color = Gray
+		if msgType == "reply" {
+			text = "回复内容:\n"
+			color = Gray
+		} else if msgType == "text" {
+			text = msgData["text"]
+			color = White
+		} else if msgType == "face" {
+			text = "[表情]"
+			color = Gold
+			faceId := "表情ID: " + msgData["id"]
+			hoverEvent = &HoverEvent{
+				Action: "show_text",
+				Contents: Component{
+					Text:  &faceId,
+					Color: colorPtr(DarkPurple),
+				},
+			}
+		} else if msgType == "file" {
+			text = "[文件]"
+			color = Gold
+			fileName := msgData["name"]
+			hoverEvent = &HoverEvent{
+				Action: "show_text",
+				Contents: Component{
+					Text:  &fileName,
+					Color: colorPtr(DarkPurple),
+				},
+			}
+		} else if msgType == "image" {
+			url := msgData["url"]
+			ciCode = "[[CICode,url=" + url + ",name=图片]]"
 
-			case "text":
-				text = msgData["text"]
-				color = White
-
-			case "face":
-				text = "[表情]"
-				color = Gold
-				faceId := "表情ID: " + msgData["id"]
-				hoverEvent = &HoverEvent{
-					Action: "show_text",
-					Contents: Component{
-						Text:  &faceId,
-						Color: colorPtr(DarkPurple),
-					},
-				}
-
-			case "file":
-				text = "[文件]"
-				color = Gold
-				fileName := msgData["name"]
-				hoverEvent = &HoverEvent{
-					Action: "show_text",
-					Contents: Component{
-						Text:  &fileName,
-						Color: colorPtr(DarkPurple),
-					},
-				}
-
-			case "image":
-				url := msgData["url"]
-				ciCode = "[[CICode,url=" + url + ",name=图片]]"
-
-				text = "[图片]"
-				color = LightPurple
-				hoverText := "点击前往浏览器查看图片"
-				hoverEvent = &HoverEvent{
-					Action: "show_text",
-					Contents: Component{
-						Text:  &hoverText,
-						Color: colorPtr(DarkPurple),
-					},
-				}
-				clickEvent = &ClickEvent{
-					Action: "open_url",
-					Value:  url,
-				}
-
-			case "record":
-				text = "[语音]"
-				color = Gold
-
-			case "video":
-				text = "[视频]"
-				color = LightPurple
-				url := msgData["url"]
-				hoverText := "点击前往浏览器查看视频"
-				hoverEvent = &HoverEvent{
-					Action: "show_text",
-					Contents: Component{
-						Text:  &hoverText,
-						Color: colorPtr(DarkPurple),
-					},
-				}
-				clickEvent = &ClickEvent{
-					Action: "open_url",
-					Value:  url,
-				}
-
-			case "at":
-				var name string
-				if msgData["qq"] == "all" {
-					name = "@所有人"
-				} else {
-					qqStr := msgData["qq"]
-					qqInt, err := strconv.ParseInt(qqStr, 10, 64)
-					if err == nil {
-						if groupMap, ok := GroupMemberNameMap[ctx.Event.GroupID]; ok {
-							if cachedName, ok2 := groupMap[qqInt]; ok2 && cachedName != "" {
-								name = cachedName
-							} else {
-								groupMemberInfo := ctx.GetThisGroupMemberInfo(qqInt, false)
-								if !groupMemberInfo.Exists() {
-									name = "@" + qqStr
-								} else {
-									name = groupMemberInfo.Get("card").String()
-									if name == "" {
-										name = groupMemberInfo.Get("nickname").String()
-									}
-									GroupMemberNameMap[ctx.Event.GroupID][qqInt] = name
-								}
-							}
+			text = "[图片]"
+			color = LightPurple
+			hoverText := "点击前往浏览器查看图片"
+			hoverEvent = &HoverEvent{
+				Action: "show_text",
+				Contents: Component{
+					Text:  &hoverText,
+					Color: colorPtr(DarkPurple),
+				},
+			}
+			clickEvent = &ClickEvent{
+				Action: "open_url",
+				Value:  url,
+			}
+		} else if msgType == "record" {
+			text = "[语音]"
+			color = Gold
+		} else if msgType == "video" {
+			text = "[视频]"
+			color = LightPurple
+			url := msgData["url"]
+			hoverText := "点击前往浏览器查看视频"
+			hoverEvent = &HoverEvent{
+				Action: "show_text",
+				Contents: Component{
+					Text:  &hoverText,
+					Color: colorPtr(DarkPurple),
+				},
+			}
+			clickEvent = &ClickEvent{
+				Action: "open_url",
+				Value:  url,
+			}
+		} else if msgType == "at" {
+			var name string
+			if msgData["qq"] == "all" {
+				name = "@所有人"
+			} else {
+				qqStr := msgData["qq"]
+				qqInt, err := strconv.ParseInt(qqStr, 10, 64)
+				if err == nil {
+					// 优先从缓存获取
+					if groupMap, ok := GroupMemberNameMap[ctx.Event.GroupID]; ok {
+						if cachedName, ok2 := groupMap[qqInt]; ok2 && cachedName != "" {
+							name = cachedName
 						} else {
-							GroupMemberNameMap[ctx.Event.GroupID] = map[int64]string{}
+							groupMemberInfo := ctx.GetThisGroupMemberInfo(qqInt, false)
+							if !groupMemberInfo.Exists() {
+								name = "@" + qqStr
+							} else {
+								name = groupMemberInfo.Get("card").String()
+								if name == "" {
+									name = groupMemberInfo.Get("nickname").String()
+								}
+								// 写入缓存
+								GroupMemberNameMap[ctx.Event.GroupID][qqInt] = name
+							}
+						}
+					} else {
+						// 初始化群成员缓存map
+						GroupMemberNameMap[ctx.Event.GroupID] = map[int64]string{}
+						groupMemberInfo := ctx.GetThisGroupMemberInfo(qqInt, false)
+						if !groupMemberInfo.Exists() {
+							name = "@" + qqStr
+						} else {
+							name = groupMemberInfo.Get("card").String()
+							if name == "" {
+								name = groupMemberInfo.Get("nickname").String()
+							}
+							// 写入缓存
+							GroupMemberNameMap[ctx.Event.GroupID][qqInt] = name
 						}
 					}
+				} else {
+					name = "@" + qqStr
 				}
-				text = "@" + name
-				color = Green
-
-			default:
-				text = "[" + msgType + "]"
-				color = Gray
+			}
+			text = "@" + name
+			color = Green
+		} else {
+			text = "[" + msgType + "]"
+			color = Gray
 		}
 
 		var component Component
