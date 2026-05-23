@@ -40,6 +40,58 @@
 - WebSocket Header 默认使用 `x-client-origin: zerobot`
 - WebSocket Client 支持断线自动重连，可在 `config.yml` 中配置 `reconnect_interval` 和 `reconnect_max_times`
 
+## 配置说明
+
+项目只支持 YAML 配置文件。默认读取 `config.yml`，也可以通过 `-config` 指定其他路径。
+
+`zero.drivers` 用于配置 ZeroBot 和 OneBot 实现之间的连接：
+
+- `websocket_server`：本程序作为 WebSocket 服务端，等待 OneBot 实现连接。
+- `websocket_client`：本程序主动连接 OneBot 实现。
+
+`mcqq.websocket_server` 和 `mcqq.websocket_client` 用于配置本程序和 Minecraft 鹊桥端之间的连接：
+
+- `mcqq.websocket_server.enable: true`：本程序作为 WebSocket 服务端，等待 Minecraft 端连接。
+- `mcqq.websocket_client`：本程序主动连接 Minecraft 端。
+- 两种 Minecraft 连接方式至少需要启用一种。
+
+`mcqq.server_map` 是服务器到 QQ 群的路由表：
+
+- key 需要和鹊桥 Minecraft 端 `server_name` 一致。
+- `group_list[].bot_id` 是发送群消息时使用的 Bot ID。
+- `group_list[].group_id` 是 QQ 群号。
+- 同一个 `group_id` 不能同时映射到多个服务器，避免 QQ 群消息被意外广播到多个 Minecraft 服务器。
+
+`mcqq.websocket_client[].reconnect_max_times` 为 `0` 时表示无限重连。
+
+## 常见问题
+
+### 提示 `配置校验失败`
+
+请优先对照 `config.example.yml` 检查字段名和缩进。YAML 对缩进敏感，建议使用两个空格缩进。
+
+### 提示 `No active websocket connection`
+
+表示 QQ 群消息找到了目标服务器配置，但该服务器没有可用的 Minecraft WebSocket 连接。请检查：
+
+- 鹊桥端 `server_name` 是否和 `mcqq.server_map`、`mcqq.websocket_client[].server_name` 一致。
+- `mcqq.websocket_client[].url` 是否正确。
+- 如果使用 `mcqq.websocket_server`，Minecraft 端是否成功连接到本程序。
+- `access_token` 是否两端一致。
+
+### 提示 `Failed to get bot with id`
+
+表示 `group_list[].bot_id` 没有匹配到当前 ZeroBot 已连接的 Bot。请检查 Bot ID 是否填写为实际机器人 QQ 号或对应适配器要求的 Bot ID。
+
+### QQ 消息没有进入 Minecraft
+
+请检查：
+
+- QQ 群号是否写在 `mcqq.server_map.*.group_list[].group_id`。
+- 当前 Bot 是否已经加入该群。
+- Minecraft WebSocket 是否已连接。
+- 鹊桥端是否使用 Protocol V2。
+
 ## 功能
 
 - 推送消息列表
