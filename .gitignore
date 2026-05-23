@@ -24,4 +24,8 @@ go.work.sum
 # env file
 .env
 
+# Local config files
+config.yml
+config.yaml
+
 .idea/

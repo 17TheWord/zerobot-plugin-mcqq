@@ -14,6 +14,36 @@ func colorPtr(c Color) *Color {
 	return &c
 }
 
+func newWebsocketData(api string, data interface{}) WebsocketData {
+	timestamp := time.Now().UnixMilli()
+	echoId := strconv.FormatInt(timestamp, 10)
+	return WebsocketData{api, data, echoId}
+}
+
+func translateText(translate TranslateModel) string {
+	if translate.Text != "" {
+		return translate.Text
+	}
+	return translate.Key
+}
+
+func deathText(death DeathModel) string {
+	if death.Text != "" {
+		return death.Text
+	}
+	return death.Key
+}
+
+func achievementText(achievement AchievementModel) string {
+	if text := translateText(achievement.Translate); text != "" {
+		return text
+	}
+	if achievement.Text != "" {
+		return achievement.Text
+	}
+	return achievement.Key
+}
+
 // processQQMessageList 处理QQ消息列表，转换为Minecraft协议的Component列表
 func processQQMessageList(ctx *zero.Ctx, message message.Message, replyModel bool) []*Component {
 	messageList := make([]*Component, 0)
@@ -147,7 +177,7 @@ func processQQMessageList(ctx *zero.Ctx, message message.Message, replyModel boo
 		if replyModel {
 			component = Component{Text: &text, Color: &color}
 		} else {
-			if PluginConfig.ChatImage {
+			if PluginConfig.ChatImage && ciCode != "" {
 				text = ciCode
 				component = Component{Text: &text}
 			} else {
@@ -219,9 +249,7 @@ func handleQQMessage(ctx *zero.Ctx) {
 
 	messageData := map[string]interface{}{"message": protoMessage}
 
-	timestamp := time.Now().UnixMilli()
-	echoId := strconv.FormatInt(timestamp, 10)
-	websocketData := WebsocketData{"send_msg", messageData, echoId}
+	websocketData := newWebsocketData(APIBroadcast, messageData)
 
 	targetServerNameList := getTargetServerNameList(ctx.Event.GroupID)
 	if len(targetServerNameList) == 0 {
@@ -245,7 +273,7 @@ func handleQQMessage(ctx *zero.Ctx) {
 }
 
 func handleMinecraftMessage(messageBytes []byte) {
-	var base map[string]interface{}
+	var base BaseEvent
 	err := json.Unmarshal(messageBytes, &base)
 	if err != nil {
 		log.Errorln("Error unmarshalling Minecraft message: ")
@@ -254,19 +282,23 @@ func handleMinecraftMessage(messageBytes []byte) {
 		return
 	}
 
-	postType := base["post_type"].(string)
-
-	if postType == "response" {
+	if base.PostType == "response" {
+		var response APIResponse
+		if err := json.Unmarshal(messageBytes, &response); err != nil {
+			log.Warningln("Error unmarshalling API response: ", err)
+		}
 		log.Info("接收到响应消息: " + string(messageBytes))
 		return
 	}
 
-	serverName := base["server_name"].(string)
-	subType := base["sub_type"].(string)
+	if base.ServerName == "" || base.SubType == "" {
+		log.Error("Invalid event from Minecraft: " + string(messageBytes))
+		return
+	}
 
-	var messageList = "[" + serverName + "] "
+	var messageList = "[" + base.ServerName + "] "
 
-	switch subType {
+	switch base.SubType {
 	case "player_chat":
 		var messageEvent PlayerChatEvent
 
@@ -277,6 +309,15 @@ func handleMinecraftMessage(messageBytes []byte) {
 		}
 
 		messageList += messageEvent.Player.Nickname + " 说：" + messageEvent.Message
+	case "player_command":
+		var commandEvent PlayerCommandEvent
+		err := json.Unmarshal(messageBytes, &commandEvent)
+		if err != nil {
+			log.Error("Error unmarshalling CommandEvent: ", err)
+			return
+		}
+
+		messageList += commandEvent.Player.Nickname + " 执行命令：" + commandEvent.Command
 
 	case "player_join", "player_quit":
 		var noticeEvent PlayerNoticeEvent
@@ -299,7 +340,7 @@ func handleMinecraftMessage(messageBytes []byte) {
 			return
 		}
 
-		messageList += deathEvent.Death.Text
+		messageList += deathText(deathEvent.Death)
 
 	case "player_achievement":
 		var achievementEvent PlayerAchievementEvent
@@ -309,15 +350,15 @@ func handleMinecraftMessage(messageBytes []byte) {
 			return
 		}
 
-		messageList += achievementEvent.Achievement.Text
+		messageList += achievementText(achievementEvent.Achievement)
 
 	default:
-		log.Error("Unsupported sub_type event from" + serverName + ": " + string(messageBytes))
+		log.Error("Unsupported sub_type event from" + base.ServerName + ": " + string(messageBytes))
 		return
 	}
 
-	log.Infof("Received message from [%s]: %s", serverName, messageList)
-	sendMcMsg2QQGroup(serverName, messageList)
+	log.Infof("Received message from [%s]: %s", base.ServerName, messageList)
+	sendMcMsg2QQGroup(base.ServerName, messageList)
 }
 
 func sendMcMsg2QQGroup(serverName string, message string) {

@@ -1,0 +1,62 @@
+# 日志配置
+log:
+  # 可选: debug, info, warn, error
+  level: "info"
+
+# ZeroBot 配置
+zero:
+  # 机器人昵称
+  nick_name:
+    - "bot"
+
+  # 命令前缀
+  command_prefix: "/"
+
+  # 超级用户 QQ 号
+  super_users:
+    - 123456789
+
+  # ZeroBot Driver 配置
+  drivers:
+    # 反向 WebSocket: ZeroBot 作为服务端等待 OneBot 实现连接
+    - type: "websocket_server"
+      id: 16
+      url: "ws://127.0.0.1:9090"
+      access_token: ""
+
+    # 正向 WebSocket: ZeroBot 主动连接 OneBot 实现
+    # - type: "websocket_client"
+    #   url: "ws://127.0.0.1:6700"
+    #   access_token: ""
+
+# MCQQ 插件配置
+mcqq:
+  # 鹊桥 WebSocket 鉴权 token。需要和 Minecraft 端 access_token 保持一致。
+  # 留空则不启用鉴权。
+  access_token: ""
+
+  # 消息响应优先级。插件会限制在 2 到 98 之间。
+  command_priority: 2
+
+  # 是否启用 ChatImage 图片直显格式。
+  chat_image: true
+
+  # 本插件作为 WebSocket Server，等待 Minecraft 端连接。
+  websocket_server:
+    enable: false
+    host: "127.0.0.1"
+    port: 8080
+
+  # 本插件作为 WebSocket Client，主动连接 Minecraft 端。
+  websocket_client:
+    - server_name: "Server"
+      url: "ws://127.0.0.1:8080/minecraft/ws"
+
+  # Minecraft 服务器与 QQ 群路由映射。
+  # 服务器名需要和鹊桥 Minecraft 端 config.yml 中的 server_name 保持一致。
+  server_map:
+    Server:
+      rcon_msg: false
+      group_list:
+        - bot_id: 123456789
+          group_id: 987654321

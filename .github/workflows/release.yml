@@ -1,4 +1,4 @@
-name: Publish to Release
+name: Build and Release
 
 on:
   push:
@@ -8,65 +8,89 @@ on:
     types: [opened, synchronize]
 
 jobs:
-  publish:
+  build:
     runs-on: ubuntu-latest
     permissions:
       contents: write
     env:
       GH_TOKEN: ${{ github.token }}
-      VERSION: ""
+      CGO_ENABLED: "0"
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Set up Go
-        uses: actions/setup-go@master
+        uses: actions/setup-go@v6
         with:
-          go-version: "1.24"
+          go-version: "1.25"
+          cache: true
 
       - name: Get version from VERSION file
-        id: get_version
         run: |
           VERSION=$(cat VERSION)
           echo "当前版本号为 ${VERSION}"
-          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+          echo "VERSION=${VERSION}" >> "$GITHUB_ENV"
 
-      - name: Check if Go code compiles
-        run: go mod tidy
+      - name: Check gofmt
+        run: |
+          UNFORMATTED=$(gofmt -l .)
+          if [ -n "$UNFORMATTED" ]; then
+            echo "以下文件未格式化:"
+            echo "$UNFORMATTED"
+            exit 1
+          fi
 
-      - name: Check if Go code passes tests
-        run: go test -v
+      - name: Check module files
+        run: |
+          go mod tidy
+          git diff --exit-code go.mod go.sum
 
-      - name: Check if Go code passes linting
-        run: go vet
+      - name: Run tests
+        run: go test -v ./...
 
-      - name: Run linting checks
-        uses: golangci/golangci-lint-action@master
+      - name: Run go vet
+        run: go vet ./...
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v8
         with:
           version: latest
 
-      - name: Check if Release exists
-        id: check-release
-        run: |
-          RESPONSE=$(gh release view v${{ env.VERSION }} -R ${{ github.repository }} 2>&1 || true)
-          if echo "$RESPONSE" | grep -q "Not Found"; then
-            echo "Release v${{ env.VERSION }} does not exist. Skipping deletion."
-            echo "RELEASE_EXISTS=false" >> $GITHUB_ENV
-          else
-            echo "Release v${{ env.VERSION }} exists."
-            echo "RELEASE_EXISTS=true" >> $GITHUB_ENV
-          fi
-
-      - name: Delete Release if exists
-        run: |
-          set +e
-          gh release delete v${{ env.VERSION }} -R ${{ github.repository }} -y --cleanup-tag
-          if [ $? -eq 0 ]; then
-            echo "Release v${{ env.VERSION }} deleted successfully."
-          else
-            echo "Failed to delete release v${{ env.VERSION }}."
-          fi
-
-      - name: Create Release with generated notes
+      - name: Build release assets
         if: github.event_name == 'push'
-        run: gh release create v${{ env.VERSION }} --generate-notes
+        run: |
+          mkdir -p dist
+
+          build() {
+            local goos=$1
+            local goarch=$2
+            local ext=$3
+            local name="zerobot-plugin-mcqq_${VERSION}_${goos}_${goarch}"
+
+            echo "Building ${name}${ext}"
+            GOOS="$goos" GOARCH="$goarch" go build -trimpath -ldflags="-s -w" -o "dist/${name}${ext}" .
+            cp config.example.yml "dist/config.example.yml"
+
+            if [ "$goos" = "windows" ]; then
+              (cd dist && zip "${name}.zip" "${name}${ext}" config.example.yml)
+            else
+              tar -czf "dist/${name}.tar.gz" -C dist "${name}${ext}" config.example.yml
+            fi
+
+            rm -f "dist/${name}${ext}" "dist/config.example.yml"
+          }
+
+          build linux amd64 ""
+          build linux arm64 ""
+          build windows amd64 ".exe"
+          build windows arm64 ".exe"
+          build darwin amd64 ""
+          build darwin arm64 ""
+
+      - name: Delete existing release
+        if: github.event_name == 'push'
+        run: gh release delete "v${VERSION}" -R "${{ github.repository }}" -y --cleanup-tag || true
+
+      - name: Create release
+        if: github.event_name == 'push'
+        run: gh release create "v${VERSION}" dist/* -R "${{ github.repository }}" --generate-notes

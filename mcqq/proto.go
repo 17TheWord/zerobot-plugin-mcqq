@@ -1,5 +1,14 @@
 package mcqq
 
+const (
+	APIBroadcast       = "broadcast"
+	APISendPrivateMsg  = "send_private_msg"
+	APISendTitle       = "send_title"
+	APISendActionBar   = "send_actionbar"
+	APISendRconCommand = "send_rcon_command"
+	APIGetStatus       = "get_status"
+)
+
 // ========================
 // 基础结构与枚举定义
 // ========================

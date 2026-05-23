@@ -1,5 +1,59 @@
 package mcqq
 
+import "encoding/json"
+
+type BaseEvent struct {
+	PostType   string `json:"post_type"`
+	ServerName string `json:"server_name"`
+	SubType    string `json:"sub_type"`
+}
+
+type APIResponse struct {
+	Code     int         `json:"code"`
+	API      string      `json:"api"`
+	PostType string      `json:"post_type"`
+	Status   string      `json:"status"`
+	Message  string      `json:"message"`
+	Data     interface{} `json:"data,omitempty"`
+	Echo     string      `json:"echo,omitempty"`
+}
+
+type TranslateModel struct {
+	Key  string        `json:"key"`
+	Args []interface{} `json:"args"`
+	Text string        `json:"text"`
+}
+
+type FlexibleTranslateText struct {
+	Text      string
+	Translate TranslateModel
+}
+
+func (f *FlexibleTranslateText) UnmarshalJSON(data []byte) error {
+	var text string
+	if err := json.Unmarshal(data, &text); err == nil {
+		f.Text = text
+		return nil
+	}
+
+	var translate TranslateModel
+	if err := json.Unmarshal(data, &translate); err != nil {
+		return err
+	}
+	f.Translate = translate
+	return nil
+}
+
+func (f FlexibleTranslateText) String() string {
+	if f.Translate.Text != "" {
+		return f.Translate.Text
+	}
+	if f.Text != "" {
+		return f.Text
+	}
+	return f.Translate.Key
+}
+
 // Player 玩家信息
 type Player struct {
 	Nickname           string  `json:"nickname"`
@@ -71,9 +125,9 @@ type PlayerDeathEvent struct {
 }
 
 type DeathModel struct {
-	Key  string   `json:"key"`
-	Args []string `json:"args"`
-	Text string   `json:"text"`
+	Key  string        `json:"key"`
+	Args []interface{} `json:"args"`
+	Text string        `json:"text"`
 }
 
 type PlayerAchievementEvent struct {
@@ -89,13 +143,14 @@ type PlayerAchievementEvent struct {
 }
 
 type AchievementModel struct {
-	Key     string       `json:"key"`
-	Display DisplayModel `json:"display"`
-	Text    string       `json:"text"`
+	Key       string         `json:"key"`
+	Display   DisplayModel   `json:"display"`
+	Text      string         `json:"text"`
+	Translate TranslateModel `json:"translate"`
 }
 
 type DisplayModel struct {
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	Frame       string `json:"frame"`
+	Title       FlexibleTranslateText `json:"title"`
+	Description FlexibleTranslateText `json:"description"`
+	Frame       string                `json:"frame"`
 }

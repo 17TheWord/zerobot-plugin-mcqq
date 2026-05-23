@@ -1,31 +1,31 @@
 package mcqq
 
 type GroupConfig struct {
-	GroupId int64
-	BotId   int64
+	GroupId int64 `yaml:"group_id"`
+	BotId   int64 `yaml:"bot_id"`
 }
 
 type ServerConfig struct {
-	GroupList []GroupConfig
-	RconMsg   bool
+	GroupList []GroupConfig `yaml:"group_list"`
+	RconMsg   bool          `yaml:"rcon_msg"`
 }
 
 type WebsocketClientConfig struct {
-	ServerName string
-	Url        string
+	ServerName string `yaml:"server_name"`
+	Url        string `yaml:"url"`
 }
 
 type WebsocketServerConfig struct {
-	Enable bool
-	Host   string
-	Port   int
+	Enable bool   `yaml:"enable"`
+	Host   string `yaml:"host"`
+	Port   int    `yaml:"port"`
 }
 
 type Config struct {
-	WebsocketServer WebsocketServerConfig
-	WebsocketClient []WebsocketClientConfig
-	ServerMap       map[string]ServerConfig
-	CommandPriority int
-	ChatImage       bool
-	AccessToken     string
+	WebsocketServer WebsocketServerConfig   `yaml:"websocket_server"`
+	WebsocketClient []WebsocketClientConfig `yaml:"websocket_client"`
+	ServerMap       map[string]ServerConfig `yaml:"server_map"`
+	CommandPriority int                     `yaml:"command_priority"`
+	ChatImage       bool                    `yaml:"chat_image"`
+	AccessToken     string                  `yaml:"access_token"`
 }
