@@ -51,10 +51,10 @@ jobs:
       - name: Run go vet
         run: go vet ./...
 
-      - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v8
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v9
         with:
-          version: latest
+          version: v2.12
 
       - name: Build release assets
         if: github.event_name == 'push'
